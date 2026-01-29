@@ -8,13 +8,15 @@ Inspired by [blaeck](https://github.com/gustafeden/blaeck), the Rust inline term
 
 blaeck.sh is for **scripts that run and finish** — installers, setup wizards, deploy tools, CLI wrappers, build scripts, health checks. Anything where you want polished output and interactive prompts without pulling in a compiled binary or runtime dependency.
 
-It is **not** a fullscreen TUI framework. If you need persistent views, scroll regions, tab panels, mouse events, or a reactive component tree — use [blaeck](https://github.com/gustafeden/blaeck) (Rust) instead. blaeck.sh stays inline with your terminal: output flows naturally, `echo` still works, and everything ends up in your scrollback.
+Both blaeck.sh and [blaeck](https://github.com/gustafeden/blaeck) are **inline** — output flows naturally, `echo` still works, everything ends up in your scrollback. Neither is a fullscreen TUI framework. The difference is power: blaeck.sh gives you the essentials in pure bash, while blaeck gives you a full component system with flexbox layout, reactive hooks, and typed components in Rust.
+
+If your script just needs spinners, progress bars, prompts, and boxes — use blaeck.sh. If you're building a CLI tool or application that needs a richer component tree, layout engine, or key event handling — use [blaeck](https://github.com/gustafeden/blaeck).
 
 | | blaeck.sh | [blaeck](https://github.com/gustafeden/blaeck) |
 |---|---|---|
 | Language | bash | Rust |
 | Install | `source blaeck.sh` | `cargo add blaeck` |
-| Use case | Scripts, installers, CLI tools | Full applications, complex TUIs |
+| Use case | Scripts, installers, CLI tools | CLI apps, richer component trees |
 | Rendering | Inline (stays in scrollback) | Inline (stays in scrollback) |
 | Layout | Simple columns | Flexbox via Taffy |
 | Components | 30 functions | 35+ typed components |
