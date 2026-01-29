@@ -284,10 +284,17 @@ Falls back gracefully to plain text when colors are unavailable.
 
 ## Examples
 
-See the [examples/](examples/) directory:
+Try them instantly — no clone required:
 
-- **`examples/showcase.sh`** — non-interactive visual demo of all components
-- **`examples/interactive.sh`** — full interactive flow: sign-in form, menus, multi-select, dashboard
+```sh
+# Visual showcase (non-interactive)
+bash <(curl -fsSL https://gustafeden.github.io/blaeck-sh/showcase.sh)
+
+# Interactive demo (sign-in, menus, multi-select, dashboard)
+bash <(curl -fsSL https://gustafeden.github.io/blaeck-sh/interactive.sh)
+```
+
+Or clone and run locally:
 
 ```sh
 git clone https://github.com/gustafeden/blaeck-sh
@@ -295,6 +302,8 @@ cd blaeck-sh
 bash examples/showcase.sh
 bash examples/interactive.sh
 ```
+
+See the [examples/](examples/) directory for the source.
 
 ## Acknowledgements
 
