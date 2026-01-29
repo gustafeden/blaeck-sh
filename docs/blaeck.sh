@@ -173,11 +173,11 @@ bk_box() {
       local stripped
       stripped=$(_bk_strip_ansi "$line")
       local len=${#stripped}
-      (( len > max_len )) && max_len=$len
+      [[ $len -gt $max_len ]] && max_len=$len
     done
     if [[ -n "$title" ]]; then
       local title_len=${#title}
-      (( title_len + 2 > max_len )) && max_len=$((title_len + 2))
+      [[ $((title_len + 2)) -gt $max_len ]] && max_len=$((title_len + 2))
     fi
     width=$((max_len + padding * 2))
   fi
@@ -344,8 +344,8 @@ bk_progress() {
     esac
   done
 
-  (( value > 100 )) && value=100
-  (( value < 0 ))   && value=0
+  [[ $value -gt 100 ]] && value=100
+  [[ $value -lt 0 ]] && value=0
 
   local filled=$(( value * width / 100 ))
   local empty=$(( width - filled ))
@@ -407,7 +407,7 @@ bk_progress_run() {
     bk_progress --style "$style" --width "$width" --color "$color" \
       --label "$label" --show-percent "$value"
     # Ease toward 90% while command runs
-    (( value < 90 )) && (( value += 1 + RANDOM % 3 ))
+    [[ $value -lt 90 ]] && value=$((value + 1 + RANDOM % 3))
     sleep 0.1
   done
   wait "$pid"
@@ -472,7 +472,7 @@ bk_table() {
       local stripped
       stripped=$(_bk_strip_ansi "$cell")
       local len=${#stripped}
-      (( len > col_widths[c] )) && col_widths[$c]=$len
+      [[ $len -gt ${col_widths[$c]} ]] && col_widths[$c]=$len
     done || true
   done || true
 
@@ -588,7 +588,7 @@ bk_select() {
   local idx=0
   local count=${#options[@]}
   local total_lines=$count
-  [[ -n "$label" ]] && (( total_lines++ ))
+  [[ -n "$label" ]] && total_lines=$((total_lines + 1))
 
   _bk_hide_cursor
 
@@ -622,8 +622,8 @@ bk_select() {
       $'\x1b')
         read -rsn2 rest
         case "$rest" in
-          '[A') (( idx > 0 )) && (( idx-- ));;          # Up
-          '[B') (( idx < count - 1 )) && (( idx++ ));;  # Down
+          '[A') [[ $idx -gt 0 ]] && idx=$((idx - 1));;          # Up
+          '[B') [[ $idx -lt $((count - 1)) ]] && idx=$((idx + 1));;  # Down
         esac
         ;;
       '') break;;  # Enter
@@ -719,14 +719,14 @@ bk_render() {
   for line in "$@"; do
     _bk_erase_line
     printf '%s\n' "$line"
-    (( count++ ))
+    count=$((count + 1))
   done
 
   # Clear remaining lines if fewer args than reserved
   while (( count < _BK_RENDER_LINES )); do
     _bk_erase_line
     printf '\n'
-    (( count++ ))
+    count=$((count + 1))
   done
 }
 
@@ -739,12 +739,17 @@ bk_render_done() {
 # Erases the current block, then reserves the new size.
 bk_render_resize() {
   local new_lines=$1
-  # Erase current block
+  # Move to top of current block and erase each line going down
   if [[ $_BK_RENDER_LINES -gt 0 ]]; then
     _bk_cursor_up "$_BK_RENDER_LINES"
-    _bk_erase_lines "$_BK_RENDER_LINES"
+    for (( i=0; i<_BK_RENDER_LINES; i++ )); do
+      _bk_erase_line
+      printf '\n'
+    done || true
+    # Cursor is now at the bottom of the old block — move back to top
+    _bk_cursor_up "$_BK_RENDER_LINES"
   fi
-  # Reserve new space
+  # Reserve new space (print newlines from top position)
   _BK_RENDER_LINES=$new_lines
   for (( i=0; i<_BK_RENDER_LINES; i++ )); do printf '\n'; done || true
 }
@@ -760,7 +765,7 @@ bk_gradient() {
 
   for (( i=0; i<len; i++ )); do
     local color_code=$(( from + (to - from) * i / (len - 1) ))
-    (( color_code < 0 )) && color_code=$(( -color_code ))
+    [[ $color_code -lt 0 ]] && color_code=$(( -color_code ))
     printf '\033[38;5;%dm%s' "$color_code" "${text:$i:1}"
   done || true
   printf '%s' "$_BK_RESET"
@@ -908,9 +913,9 @@ bk_multiselect() {
   for (( i=0; i<count; i++ )); do checked[$i]=0; done || true
 
   local total_lines=$count
-  [[ -n "$label" ]] && (( total_lines++ ))
+  [[ -n "$label" ]] && total_lines=$((total_lines + 1))
   local footer_lines=1
-  (( total_lines += footer_lines ))
+  total_lines=$((total_lines + footer_lines))
 
   _bk_hide_cursor
   trap '_bk_show_cursor' RETURN
@@ -947,8 +952,8 @@ bk_multiselect() {
       $'\x1b')
         read -rsn2 rest
         case "$rest" in
-          '[A') (( idx > 0 )) && (( idx-- ));;
-          '[B') (( idx < count - 1 )) && (( idx++ ));;
+          '[A') [[ $idx -gt 0 ]] && idx=$((idx - 1));;
+          '[B') [[ $idx -lt $((count - 1)) ]] && idx=$((idx + 1));;
         esac
         ;;
       ' ')  # Space toggles
@@ -1019,9 +1024,9 @@ bk_columns() {
     local h=0
     while IFS= read -r line; do
       col_lines+=("$line")
-      (( h++ ))
+      h=$((h + 1))
     done <<< "$text"
-    (( h > max_height )) && max_height=$h
+    [[ $h -gt $max_height ]] && max_height=$h
   done || true
 
   # Pad shorter columns
@@ -1033,11 +1038,11 @@ bk_columns() {
     local r=0
     while IFS= read -r line; do
       col_data[$((c * max_height + r))]="$line"
-      (( r++ ))
+      r=$((r + 1))
     done <<< "$text"
     while (( r < max_height )); do
       col_data[$((c * max_height + r))]=""
-      (( r++ ))
+      r=$((r + 1))
     done
   done || true
 
@@ -1050,7 +1055,7 @@ bk_columns() {
       local visible_len=${#stripped}
       local w=${widths[$c]}
       local pad_len=$(( w - visible_len ))
-      (( pad_len < 0 )) && pad_len=0
+      [[ $pad_len -lt 0 ]] && pad_len=0
 
       printf '%s' "$cell"
       for (( p=0; p<pad_len; p++ )); do printf ' '; done || true
@@ -1114,8 +1119,8 @@ bk_range() {
   done
 
   min="${1:-0}"; max="${2:-100}"; value="${3:-$min}"
-  (( value < min )) && value=$min
-  (( value > max )) && value=$max
+  [[ $value -lt $min ]] && value=$min
+  [[ $value -gt $max ]] && value=$max
 
   local c; c=$(_bk_color "$color")
 
@@ -1142,10 +1147,10 @@ bk_range() {
         read -rsn2 rest
         case "$rest" in
           '[D'|'[A') # Left / Up
-            (( value > min )) && (( value-- ))
+            [[ $value -gt $min ]] && value=$((value - 1))
             ;;
           '[C'|'[B') # Right / Down
-            (( value < max )) && (( value++ ))
+            [[ $value -lt $max ]] && value=$((value + 1))
             ;;
         esac
         ;;
@@ -1258,7 +1263,7 @@ bk_log() {
     *)     level_num=1; color="$_BK_CYAN";    level_label="INFO ";;
   esac
 
-  (( level_num < _BK_LOG_LEVEL )) && return
+  [[ $level_num -lt $_BK_LOG_LEVEL ]] && return
 
   local timestamp
   timestamp=$(date +'%Y-%m-%dT%H:%M:%S')
