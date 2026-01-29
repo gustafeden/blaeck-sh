@@ -1,0 +1,97 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check bash syntax
+        run: bash -n blaeck.sh
+
+      - name: Check examples syntax
+        run: |
+          for f in examples/*.sh; do
+            bash -n "$f"
+          done
+
+  test:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Source and verify
+        run: |
+          bash -c '
+            source blaeck.sh
+            # Verify core functions exist
+            type bk_box >/dev/null
+            type bk_spinner >/dev/null
+            type bk_progress >/dev/null
+            type bk_table >/dev/null
+            type bk_select >/dev/null
+            type bk_input >/dev/null
+            type bk_columns >/dev/null
+            type bk_render >/dev/null
+            echo "All functions loaded"
+          '
+
+      - name: Test ANSI stripping
+        run: |
+          bash -c '
+            source blaeck.sh
+            _BK_GREEN=$'"'"'\033[32m'"'"'
+            _BK_RESET=$'"'"'\033[0m'"'"'
+            raw=$(bk_green "hello")
+            stripped=$(_bk_strip_ansi "$raw")
+            [ "$stripped" = "hello" ] || { echo "FAIL: strip_ansi"; exit 1; }
+            echo "ANSI stripping OK"
+          '
+
+      - name: Test box rendering
+        run: |
+          bash -c '
+            source blaeck.sh
+            output=$(bk_box --style round "test line")
+            echo "$output" | grep -q "╭" || { echo "FAIL: box top"; exit 1; }
+            echo "$output" | grep -q "╰" || { echo "FAIL: box bottom"; exit 1; }
+            echo "$output" | grep -q "test line" || { echo "FAIL: box content"; exit 1; }
+            echo "Box rendering OK"
+          '
+
+      - name: Test table rendering
+        run: |
+          bash -c '
+            source blaeck.sh
+            output=$(bk_table --header --border round "A,B" "1,2")
+            lines=$(echo "$output" | wc -l)
+            [ "$lines" -ge 4 ] || { echo "FAIL: table lines=$lines"; exit 1; }
+            echo "Table rendering OK"
+          '
+
+  sync-docs:
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    needs: [lint, test]
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Sync blaeck.sh to docs/
+        run: |
+          if ! diff -q blaeck.sh docs/blaeck.sh >/dev/null 2>&1; then
+            cp blaeck.sh docs/blaeck.sh
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add docs/blaeck.sh
+            git commit -m "sync docs/blaeck.sh"
+            git push
+          fi

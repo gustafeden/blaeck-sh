@@ -1,0 +1,28 @@
+name: Release
+
+on:
+  push:
+    tags: ["v*"]
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Package blaeck.sh
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          tar czf blaeck-sh-${VERSION}.tar.gz blaeck.sh examples/
+          cp blaeck.sh blaeck-${VERSION}.sh
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
+          files: |
+            blaeck.sh
+            blaeck-sh-*.tar.gz
