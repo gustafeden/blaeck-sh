@@ -191,6 +191,34 @@ if bk_confirm "Delete file?"; then
 fi
 ```
 
+### Range Picker
+
+```sh
+bk_range --color cyan --label "Volume:" 0 100 50
+echo "Value: $BK_RANGE_VALUE"
+# Volume: 0 ❮ 50 ❯ 100
+# Use left/right arrows to adjust, enter to confirm
+```
+
+### Editor
+
+Opens `$EDITOR` (or `vi`) for multi-line input:
+
+```sh
+bk_editor --label "Edit your config:"
+echo "$BK_EDITOR_VALUE"
+```
+
+### Validation
+
+Repeats a prompt until a validation function passes:
+
+```sh
+not_empty() { [[ -n "$1" ]] || { echo "Cannot be empty"; return 1; }; }
+bk_validate 'bk_input --label "Name:"' not_empty
+echo "$BK_INPUT_VALUE"
+```
+
 ### Flexbox Columns
 
 ```sh
@@ -235,6 +263,35 @@ done
 bk_render_done
 ```
 
+### Logging
+
+```sh
+bk_log_level debug    # threshold: debug | info | warn | error
+
+bk_log debug "loading config"
+bk_log info "server started on :8080"
+bk_log warn "disk usage above 80%"
+bk_log error "connection refused"
+# [DEBUG] 2026-01-29T20:01:10 loading config
+# [INFO ] 2026-01-29T20:01:10 server started on :8080
+# [WARN ] 2026-01-29T20:01:10 disk usage above 80%
+# [ERROR] 2026-01-29T20:01:10 connection refused
+```
+
+### OS Detection
+
+```sh
+os=$(bk_detect_os)      # macos | linux | windows | bsd | unknown
+arch=$(bk_detect_arch)  # x86_64 | aarch64 | ...
+```
+
+### Open in Browser
+
+```sh
+bk_open "https://github.com/gustafeden/blaeck-sh"
+# Falls back to printing the URL if no opener is available
+```
+
 ### Other Utilities
 
 ```sh
@@ -267,8 +324,14 @@ bk_cleanup                  # restore cursor + reset colors (use in trap)
 | `bk_select` | Arrow-key select menu | `$BK_SELECTED`, `$BK_SELECTED_VALUE` |
 | `bk_multiselect` | Checkbox multi-select | `$BK_MULTI_SELECTED`, `$BK_MULTI_SELECTED_VALUES` |
 | `bk_confirm` | Yes/no confirm | `$BK_CONFIRMED` (+ return code) |
+| `bk_range` | Numeric range picker | `$BK_RANGE_VALUE` |
+| `bk_editor` | Open `$EDITOR` for multi-line input | `$BK_EDITOR_VALUE` |
+| `bk_validate` | Repeat prompt until validation passes | — |
 | `bk_columns` | Flexbox-style columns | — |
 | `bk_render_init`, `bk_render`, `bk_render_done` | Inline re-rendering | — |
+| `bk_log`, `bk_log_level` | Leveled logging with timestamps | — |
+| `bk_detect_os`, `bk_detect_arch` | OS and architecture detection | — |
+| `bk_open` | Open URL in browser | — |
 | `bk_banner` | Centered title bar | — |
 | `bk_indent` | Indent piped text | — |
 | `bk_spacer` | Print blank lines | — |
