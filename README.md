@@ -4,6 +4,23 @@ Terminal UI primitives for bash scripts. A single file you `source` to get spinn
 
 Inspired by [blaeck](https://github.com/gustafeden/blaeck), the Rust inline terminal UI framework.
 
+## What blaeck.sh is for
+
+blaeck.sh is for **scripts that run and finish** — installers, setup wizards, deploy tools, CLI wrappers, build scripts, health checks. Anything where you want polished output and interactive prompts without pulling in a compiled binary or runtime dependency.
+
+It is **not** a fullscreen TUI framework. If you need persistent views, scroll regions, tab panels, mouse events, or a reactive component tree — use [blaeck](https://github.com/gustafeden/blaeck) (Rust) instead. blaeck.sh stays inline with your terminal: output flows naturally, `echo` still works, and everything ends up in your scrollback.
+
+| | blaeck.sh | [blaeck](https://github.com/gustafeden/blaeck) |
+|---|---|---|
+| Language | bash | Rust |
+| Install | `source blaeck.sh` | `cargo add blaeck` |
+| Use case | Scripts, installers, CLI tools | Full applications, complex TUIs |
+| Rendering | Inline (stays in scrollback) | Inline (stays in scrollback) |
+| Layout | Simple columns | Flexbox via Taffy |
+| Components | 30 functions | 35+ typed components |
+| Interactivity | Prompts, menus | Reactive hooks, key events |
+| Dependencies | None | Compiled into binary |
+
 ## Install
 
 Source it directly in your script:
