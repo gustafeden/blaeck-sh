@@ -280,6 +280,13 @@ for (( i=0; i<4; i++ )); do
 done
 
 bk_render_done
+
+# Resize a render block mid-stream (e.g., expand after progress finishes)
+bk_render_init 5
+# ... render progress steps ...
+bk_render_resize 12   # erase old block, reserve 12 lines
+# ... render expanded result ...
+bk_render_done
 ```
 
 ### Logging
@@ -347,7 +354,7 @@ bk_cleanup                  # restore cursor + reset colors (use in trap)
 | `bk_editor` | Open `$EDITOR` for multi-line input | `$BK_EDITOR_VALUE` |
 | `bk_validate` | Repeat prompt until validation passes | — |
 | `bk_columns` | Flexbox-style columns | — |
-| `bk_render_init`, `bk_render`, `bk_render_done` | Inline re-rendering | — |
+| `bk_render_init`, `bk_render`, `bk_render_done`, `bk_render_resize` | Inline re-rendering | — |
 | `bk_log`, `bk_log_level` | Leveled logging with timestamps | — |
 | `bk_detect_os`, `bk_detect_arch` | OS and architecture detection | — |
 | `bk_open` | Open URL in browser | — |

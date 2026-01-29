@@ -735,6 +735,20 @@ bk_render_done() {
   _BK_RENDER_LINES=0
 }
 
+# Resize a live render block to a new line count without leaving duplicates.
+# Erases the current block, then reserves the new size.
+bk_render_resize() {
+  local new_lines=$1
+  # Erase current block
+  if [[ $_BK_RENDER_LINES -gt 0 ]]; then
+    _bk_cursor_up "$_BK_RENDER_LINES"
+    _bk_erase_lines "$_BK_RENDER_LINES"
+  fi
+  # Reserve new space
+  _BK_RENDER_LINES=$new_lines
+  for (( i=0; i<_BK_RENDER_LINES; i++ )); do printf '\n'; done
+}
+
 # ---------------------------------------------------------------------------
 # Gradient text (simple 2-color left-to-right using 256-color)
 # ---------------------------------------------------------------------------
