@@ -223,7 +223,11 @@ printf '\n'
 bk_box --style round --color green \
   "$(bk_green '✓') $(bk_bold 'blaeck.sh') — $(bk_dim 'source it and go')" \
   "" \
-  "  source <(curl -fsSL .../blaeck.sh)" \
+  "  $(bk_gray '# From GitHub Pages')" \
+  "  source <(curl -fsSL gustafeden.github.io/blaeck-sh/blaeck.sh)" \
+  "" \
+  "  $(bk_gray '# From GitHub raw')" \
+  "  source <(curl -fsSL raw.githubusercontent.com/gustafeden/blaeck-sh/main/blaeck.sh)" \
   "" \
   "  $(bk_gray 'Zero dependencies. Pure bash. Works everywhere.')"
 

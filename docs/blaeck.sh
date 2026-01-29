@@ -617,7 +617,7 @@ bk_select() {
 
   # Input loop
   while true; do
-    read -rsn1 key
+    IFS= read -rsn1 key
     case "$key" in
       $'\x1b')
         read -rsn2 rest
@@ -673,7 +673,7 @@ bk_confirm() {
   _bk_confirm_render 0
 
   while true; do
-    read -rsn1 key
+    IFS= read -rsn1 key
     case "$key" in
       $'\x1b')
         read -rsn2 rest
@@ -803,7 +803,7 @@ bk_input() {
   _bk_input_render
 
   while true; do
-    read -rsn1 key
+    IFS= read -rsn1 key
     case "$key" in
       '')  # Enter
         break
@@ -860,7 +860,7 @@ bk_password() {
   _bk_pw_render
 
   while true; do
-    read -rsn1 key
+    IFS= read -rsn1 key
     case "$key" in
       '')
         break
@@ -947,7 +947,7 @@ bk_multiselect() {
   _bk_ms_render 0
 
   while true; do
-    read -rsn1 key
+    IFS= read -rsn1 key
     case "$key" in
       $'\x1b')
         read -rsn2 rest
@@ -1141,7 +1141,7 @@ bk_range() {
   _bk_range_render
 
   while true; do
-    read -rsn1 key
+    IFS= read -rsn1 key
     case "$key" in
       $'\x1b')
         read -rsn2 rest
