@@ -1083,6 +1083,225 @@ bk_banner() {
 }
 
 # ---------------------------------------------------------------------------
+# Range picker (numeric)
+# ---------------------------------------------------------------------------
+# Usage: bk_range [--color cyan] [--label "Pick a number:"] MIN MAX [DEFAULT]
+#   Result in BK_RANGE_VALUE
+bk_range() {
+  local color="cyan" label=""
+  local min=0 max=100 value=0
+
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --color) color="$2"; shift 2;;
+      --label) label="$2"; shift 2;;
+      *)       break;;
+    esac
+  done
+
+  min="${1:-0}"; max="${2:-100}"; value="${3:-$min}"
+  (( value < min )) && value=$min
+  (( value > max )) && value=$max
+
+  local c; c=$(_bk_color "$color")
+
+  _bk_hide_cursor
+  trap '_bk_show_cursor' RETURN
+
+  _bk_range_render() {
+    _bk_erase_line
+    [[ -n "$label" ]] && printf '%s%s%s ' "$_BK_BOLD" "$label" "$_BK_RESET"
+    printf '%s%s%s %s❮%s %s%s%s %s❯%s %s%s%s' \
+      "$_BK_GRAY" "$min" "$_BK_RESET" \
+      "$_BK_GRAY" "$_BK_RESET" \
+      "$c" "$value" "$_BK_RESET" \
+      "$_BK_GRAY" "$_BK_RESET" \
+      "$_BK_GRAY" "$max" "$_BK_RESET"
+  }
+
+  _bk_range_render
+
+  while true; do
+    read -rsn1 key
+    case "$key" in
+      $'\x1b')
+        read -rsn2 rest
+        case "$rest" in
+          '[D'|'[A') # Left / Up
+            (( value > min )) && (( value-- ))
+            ;;
+          '[C'|'[B') # Right / Down
+            (( value < max )) && (( value++ ))
+            ;;
+        esac
+        ;;
+      '') break;;  # Enter
+      'q') _bk_show_cursor; return 1;;
+    esac
+    _bk_range_render
+  done
+
+  printf '\n'
+  _bk_show_cursor
+  BK_RANGE_VALUE=$value
+  return 0
+}
+
+# ---------------------------------------------------------------------------
+# Editor (open $EDITOR for multi-line input)
+# ---------------------------------------------------------------------------
+# Usage: bk_editor [--label "Edit config:"]
+#   Result in BK_EDITOR_VALUE
+bk_editor() {
+  local label=""
+  while [[ $# -gt 0 ]]; do
+    case "$1" in
+      --label) label="$2"; shift 2;;
+      *)       shift;;
+    esac
+  done
+
+  local tmpfile
+  tmpfile=$(mktemp "${TMPDIR:-/tmp}/blaeck-editor.XXXXXX")
+
+  [[ -n "$label" ]] && printf '%s%s%s\n' "$_BK_BOLD" "$label" "$_BK_RESET"
+
+  "${EDITOR:-vi}" "$tmpfile" </dev/tty >/dev/tty
+
+  if [[ -s "$tmpfile" ]]; then
+    BK_EDITOR_VALUE=$(<"$tmpfile")
+    printf '%s%s%s\n' "$_BK_CYAN" "$(sed 's/^/  /' "$tmpfile")" "$_BK_RESET"
+  else
+    BK_EDITOR_VALUE=""
+  fi
+
+  rm -f "$tmpfile"
+}
+
+# ---------------------------------------------------------------------------
+# Validation wrapper
+# ---------------------------------------------------------------------------
+# Usage: bk_validate "prompt_command" validation_function
+#   Repeats prompt_command until validation_function returns 0.
+#   validation_function receives the value as $1.
+#   If it fails (returns non-zero), its stdout is shown as the error message.
+#
+# Example:
+#   not_empty() { [[ -n "$1" ]] || { echo "Cannot be empty"; return 1; }; }
+#   bk_validate 'bk_input --label "Name:"' not_empty
+#   echo "$BK_INPUT_VALUE"
+bk_validate() {
+  local prompt_cmd="$1"
+  local validate_fn="$2"
+
+  while true; do
+    eval "$prompt_cmd"
+    # Grab the most recent result variable
+    local val=""
+    [[ -n "${BK_INPUT_VALUE:-}" ]] && val="$BK_INPUT_VALUE"
+    [[ -n "${BK_SELECTED_VALUE:-}" ]] && val="$BK_SELECTED_VALUE"
+    [[ -n "${BK_RANGE_VALUE:-}" ]] && val="$BK_RANGE_VALUE"
+    [[ -n "${BK_EDITOR_VALUE:-}" ]] && val="$BK_EDITOR_VALUE"
+
+    local err_msg
+    if err_msg=$("$validate_fn" "$val" 2>&1); then
+      break
+    else
+      [[ -n "$err_msg" ]] && printf '%s✗ %s%s\n' "$_BK_RED" "$err_msg" "$_BK_RESET"
+    fi
+  done
+}
+
+# ---------------------------------------------------------------------------
+# Leveled logging
+# ---------------------------------------------------------------------------
+# Usage:
+#   bk_log_level info          # set threshold (debug|info|warn|error)
+#   bk_log debug "details"
+#   bk_log info "starting"
+#   bk_log warn "careful"
+#   bk_log error "failed"
+_BK_LOG_LEVEL=1  # default: info
+
+bk_log_level() {
+  case "${1:-info}" in
+    debug) _BK_LOG_LEVEL=0;;
+    info)  _BK_LOG_LEVEL=1;;
+    warn)  _BK_LOG_LEVEL=2;;
+    error) _BK_LOG_LEVEL=3;;
+  esac
+}
+
+bk_log() {
+  local level="$1" message="$2"
+  local level_num color level_label
+
+  case "$level" in
+    debug) level_num=0; color="$_BK_BLUE";    level_label="DEBUG";;
+    info)  level_num=1; color="$_BK_CYAN";    level_label="INFO ";;
+    warn)  level_num=2; color="$_BK_YELLOW";  level_label="WARN ";;
+    error) level_num=3; color="$_BK_RED";     level_label="ERROR";;
+    *)     level_num=1; color="$_BK_CYAN";    level_label="INFO ";;
+  esac
+
+  (( level_num < _BK_LOG_LEVEL )) && return
+
+  local timestamp
+  timestamp=$(date +'%Y-%m-%dT%H:%M:%S')
+
+  printf '[%s%s%s] %s%s%s %s\n' \
+    "$color" "$level_label" "$_BK_RESET" \
+    "$_BK_MAGENTA" "$timestamp" "$_BK_RESET" \
+    "$message"
+}
+
+# ---------------------------------------------------------------------------
+# OS detection
+# ---------------------------------------------------------------------------
+# Usage: bk_detect_os → prints: macos, linux, windows, bsd, or unknown
+bk_detect_os() {
+  case "$(uname -s)" in
+    Darwin)  echo "macos";;
+    Linux)   echo "linux";;
+    MINGW*|MSYS*|CYGWIN*) echo "windows";;
+    *BSD)    echo "bsd";;
+    *)       echo "unknown";;
+  esac
+}
+
+# Usage: bk_detect_arch → prints: x86_64, aarch64, or the raw uname -m
+bk_detect_arch() {
+  local arch
+  arch=$(uname -m)
+  case "$arch" in
+    arm64) echo "aarch64";;
+    *)     echo "$arch";;
+  esac
+}
+
+# ---------------------------------------------------------------------------
+# Open link in browser
+# ---------------------------------------------------------------------------
+# Usage: bk_open "https://example.com"
+bk_open() {
+  local url="$1"
+  local cmd=""
+
+  case "$(bk_detect_os)" in
+    macos)   cmd="open";;
+    linux)   cmd="xdg-open";;
+    windows) cmd="start";;
+  esac
+
+  if [[ -n "$cmd" ]] && command -v "$cmd" >/dev/null 2>&1; then
+    "$cmd" "$url" 2>/dev/null
+  else
+    printf 'Open this URL in your browser:\n  %s%s%s\n' "$_BK_CYAN" "$url" "$_BK_RESET"
+    return 1
+  fi
+}
+
+# ---------------------------------------------------------------------------
 # Cleanup trap helper
 # ---------------------------------------------------------------------------
 bk_cleanup() {
