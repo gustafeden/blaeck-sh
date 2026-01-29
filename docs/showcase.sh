@@ -135,6 +135,7 @@ icons=("○" "○" "○" "○" "○")
 icon_colors=("$_BK_GRAY" "$_BK_GRAY" "$_BK_GRAY" "$_BK_GRAY" "$_BK_GRAY")
 sframes=(⠋ ⠙ ⠹ ⠸ ⠼ ⠴ ⠦ ⠧ ⠇ ⠏)
 
+# Start with 5 lines for the step list
 bk_render_init 5
 
 for (( step=0; step<5; step++ )); do
@@ -158,12 +159,19 @@ for (( step=0; step<5; step++ )); do
   done
 done
 
+# All steps done — resize block to fit result box below
 icons[4]="✓"
 icon_colors[4]="$_BK_GREEN"
+bk_render_resize 9
+
 final_lines=()
 for (( s=0; s<5; s++ )); do
   final_lines+=("  ${icon_colors[$s]}${icons[$s]}${_BK_RESET} ${deploy_steps[$s]}")
 done
+final_lines+=("")
+final_lines+=("  ${_BK_GREEN}╭────────────────────────────╮${_BK_RESET}")
+final_lines+=("  ${_BK_GREEN}│${_BK_RESET} ${_BK_GREEN}✓${_BK_RESET} ${_BK_BOLD}Deploy complete!${_BK_RESET}          ${_BK_GREEN}│${_BK_RESET}")
+final_lines+=("  ${_BK_GREEN}╰────────────────────────────╯${_BK_RESET}")
 bk_render "${final_lines[@]}"
 bk_render_done
 
