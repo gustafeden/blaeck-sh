@@ -88,7 +88,7 @@ _bk_erase_lines() {
   for (( i=0; i<n; i++ )); do
     _bk_erase_line
     [[ $i -lt $((n-1)) ]] && _bk_cursor_up 1
-  done
+  done || true
 }
 
 # ---------------------------------------------------------------------------
@@ -132,7 +132,7 @@ bk_hr() {
   local char="${1:-─}" width="${2:-$(_bk_cols)}" color="${3:-gray}"
   local c; c=$(_bk_color "$color")
   local line=""
-  for (( i=0; i<width; i++ )); do line+="$char"; done
+  for (( i=0; i<width; i++ )); do line+="$char"; done || true
   printf '%s%s%s\n' "$c" "$line" "$_BK_RESET"
 }
 
@@ -184,18 +184,18 @@ bk_box() {
 
   local c; c=$(_bk_color "$color")
   local pad=""
-  for (( i=0; i<padding; i++ )); do pad+=" "; done
+  for (( i=0; i<padding; i++ )); do pad+=" "; done || true
 
   # Top border
   local hline=""
-  for (( i=0; i<width; i++ )); do hline+="$h"; done
+  for (( i=0; i<width; i++ )); do hline+="$h"; done || true
 
   if [[ -n "$title" ]]; then
     local before_len=$(( (width - ${#title} - 2) / 2 ))
     local after_len=$(( width - ${#title} - 2 - before_len ))
     local before="" after=""
-    for (( i=0; i<before_len; i++ )); do before+="$h"; done
-    for (( i=0; i<after_len; i++ )); do after+="$h"; done
+    for (( i=0; i<before_len; i++ )); do before+="$h"; done || true
+    for (( i=0; i<after_len; i++ )); do after+="$h"; done || true
     printf '%s%s%s %s %s%s%s\n' "$c" "$tl" "$before" "$title" "$after" "$tr" "$_BK_RESET"
   else
     printf '%s%s%s%s%s\n' "$c" "$tl" "$hline" "$tr" "$_BK_RESET"
@@ -208,10 +208,10 @@ bk_box() {
     local visible_len=${#stripped}
     local fill_len=$(( width - padding * 2 - visible_len ))
     local fill=""
-    for (( i=0; i<fill_len; i++ )); do fill+=" "; done
+    for (( i=0; i<fill_len; i++ )); do fill+=" "; done || true
     printf '%s%s%s%s%s%s%s%s%s\n' \
       "$c" "$v" "$_BK_RESET" "$pad" "$line" "$fill" "$pad" "$c$v" "$_BK_RESET"
-  done
+  done || true
 
   # Bottom border
   printf '%s%s%s%s%s\n' "$c" "$bl" "$hline" "$br" "$_BK_RESET"
@@ -365,14 +365,14 @@ bk_progress() {
 
   # Build bar
   if [[ -n "$head_char" && $filled -gt 0 && $filled -lt $width ]]; then
-    for (( i=0; i<filled-1; i++ )); do bar+="$fill_char"; done
+    for (( i=0; i<filled-1; i++ )); do bar+="$fill_char"; done || true
     bar+="$head_char"
   else
-    for (( i=0; i<filled; i++ )); do bar+="$fill_char"; done
+    for (( i=0; i<filled; i++ )); do bar+="$fill_char"; done || true
   fi
 
   local empty_part=""
-  for (( i=0; i<empty; i++ )); do empty_part+="$empty_char"; done
+  for (( i=0; i<empty; i++ )); do empty_part+="$empty_char"; done || true
 
   # Assemble output
   local out=""
@@ -459,12 +459,12 @@ bk_table() {
     all_cells+=("${cells[@]}")
     # Pad short rows
     local pad=$(( num_cols - ${#cells[@]} ))
-    for (( p=0; p<pad; p++ )); do all_cells+=(""); done
-  done
+    for (( p=0; p<pad; p++ )); do all_cells+=(""); done || true
+  done || true
 
   # Calculate column widths
   local -a col_widths=()
-  for (( c=0; c<num_cols; c++ )); do col_widths[$c]=0; done
+  for (( c=0; c<num_cols; c++ )); do col_widths[$c]=0; done || true
 
   for (( r=0; r<num_rows; r++ )); do
     for (( c=0; c<num_cols; c++ )); do
@@ -473,8 +473,8 @@ bk_table() {
       stripped=$(_bk_strip_ansi "$cell")
       local len=${#stripped}
       (( len > col_widths[c] )) && col_widths[$c]=$len
-    done
-  done
+    done || true
+  done || true
 
   # Border characters
   local bc; bc=$(_bk_color "$color")
@@ -493,9 +493,9 @@ bk_table() {
     printf '%s%s' "$bc" "$left"
     for (( c=0; c<num_cols; c++ )); do
       local w=$(( col_widths[c] + gap ))
-      for (( i=0; i<w; i++ )); do printf '%s' "$hc"; done
+      for (( i=0; i<w; i++ )); do printf '%s' "$hc"; done || true
       if (( c < num_cols - 1 )); then printf '%s' "$mid"; fi
-    done
+    done || true
     printf '%s%s\n' "$right" "$_BK_RESET"
   }
 
@@ -519,7 +519,7 @@ bk_table() {
       local visible_len=${#stripped}
       local pad_len=$(( col_widths[c] - visible_len ))
       local pad=""
-      for (( i=0; i<pad_len; i++ )); do pad+=" "; done
+      for (( i=0; i<pad_len; i++ )); do pad+=" "; done || true
 
       # Header row bold
       if [[ $has_header -eq 1 && $r -eq 0 ]]; then
@@ -531,7 +531,7 @@ bk_table() {
       if [[ "$border" != "none" && $c -lt $((num_cols - 1)) ]]; then
         printf '%s%s%s' "$bc" "$v" "$_BK_RESET"
       fi
-    done
+    done || true
 
     [[ "$border" != "none" ]] && printf '%s%s%s' "$bc" "$v" "$_BK_RESET"
     printf '\n'
@@ -543,12 +543,12 @@ bk_table() {
       else
         for (( c=0; c<num_cols; c++ )); do
           local w=$(( col_widths[c] + gap ))
-          for (( i=0; i<w; i++ )); do printf '─'; done
-        done
+          for (( i=0; i<w; i++ )); do printf '─'; done || true
+        done || true
         printf '\n'
       fi
     fi
-  done
+  done || true
 
   # Bottom border
   [[ "$border" != "none" ]] && _bk_table_hline "$bl" "$t_up" "$br" "$h"
@@ -609,7 +609,7 @@ bk_select() {
       else
         printf '%s%s%s %s%s\n' "$_BK_GRAY" "$uns_char" "$_BK_RESET" "${options[$i]}" "$_BK_RESET"
       fi
-    done
+    done || true
   }
 
   # Initial render
@@ -707,7 +707,7 @@ bk_render_init() {
   _BK_RENDER_LINES=$1
   # Print empty lines to reserve space, cursor stays at bottom.
   # bk_render will cursor_up to the top before writing.
-  for (( i=0; i<_BK_RENDER_LINES; i++ )); do printf '\n'; done
+  for (( i=0; i<_BK_RENDER_LINES; i++ )); do printf '\n'; done || true
   _bk_hide_cursor
 }
 
@@ -746,7 +746,7 @@ bk_render_resize() {
   fi
   # Reserve new space
   _BK_RENDER_LINES=$new_lines
-  for (( i=0; i<_BK_RENDER_LINES; i++ )); do printf '\n'; done
+  for (( i=0; i<_BK_RENDER_LINES; i++ )); do printf '\n'; done || true
 }
 
 # ---------------------------------------------------------------------------
@@ -762,7 +762,7 @@ bk_gradient() {
     local color_code=$(( from + (to - from) * i / (len - 1) ))
     (( color_code < 0 )) && color_code=$(( -color_code ))
     printf '\033[38;5;%dm%s' "$color_code" "${text:$i:1}"
-  done
+  done || true
   printf '%s' "$_BK_RESET"
 }
 
@@ -848,7 +848,7 @@ bk_password() {
     _bk_erase_line
     printf '%s%s%s ' "$_BK_BOLD" "$label" "$_BK_RESET"
     local masked=""
-    for (( i=0; i<${#value}; i++ )); do masked+="$mask"; done
+    for (( i=0; i<${#value}; i++ )); do masked+="$mask"; done || true
     printf '%s%s%s' "$c" "$masked" "$_BK_RESET"
   }
 
@@ -905,7 +905,7 @@ bk_multiselect() {
   local idx=0
   local count=${#options[@]}
   local -a checked=()
-  for (( i=0; i<count; i++ )); do checked[$i]=0; done
+  for (( i=0; i<count; i++ )); do checked[$i]=0; done || true
 
   local total_lines=$count
   [[ -n "$label" ]] && (( total_lines++ ))
@@ -933,7 +933,7 @@ bk_multiselect() {
       else
         printf '  %s %s\n' "$check_icon" "${options[$i]}"
       fi
-    done
+    done || true
 
     _bk_erase_line
     printf '%s↑↓ move  space toggle  enter confirm%s\n' "$_BK_GRAY" "$_BK_RESET"
@@ -972,7 +972,7 @@ bk_multiselect() {
       BK_MULTI_SELECTED+="$i "
       BK_MULTI_SELECTED_VALUES+="${options[$i]}"$'\n'
     fi
-  done
+  done || true
   BK_MULTI_SELECTED="${BK_MULTI_SELECTED% }"
   BK_MULTI_SELECTED_VALUES="${BK_MULTI_SELECTED_VALUES%$'\n'}"
   return 0
@@ -1007,7 +1007,7 @@ bk_columns() {
   else
     # Equal widths
     local each=$(( (term_width - gap * (num_cols - 1)) / num_cols ))
-    for (( i=0; i<num_cols; i++ )); do widths[$i]=$each; done
+    for (( i=0; i<num_cols; i++ )); do widths[$i]=$each; done || true
   fi
 
   # Split each column text by newlines, find max height
@@ -1022,7 +1022,7 @@ bk_columns() {
       (( h++ ))
     done <<< "$text"
     (( h > max_height )) && max_height=$h
-  done
+  done || true
 
   # Pad shorter columns
   # Re-parse to get per-column arrays
@@ -1039,7 +1039,7 @@ bk_columns() {
       col_data[$((c * max_height + r))]=""
       (( r++ ))
     done
-  done
+  done || true
 
   # Render row by row
   for (( r=0; r<max_height; r++ )); do
@@ -1053,20 +1053,20 @@ bk_columns() {
       (( pad_len < 0 )) && pad_len=0
 
       printf '%s' "$cell"
-      for (( p=0; p<pad_len; p++ )); do printf ' '; done
+      for (( p=0; p<pad_len; p++ )); do printf ' '; done || true
 
       if (( c < num_cols - 1 )); then
-        for (( g=0; g<gap; g++ )); do printf ' '; done
+        for (( g=0; g<gap; g++ )); do printf ' '; done || true
       fi
-    done
+    done || true
     printf '\n'
-  done
+  done || true
 }
 
 # ---------------------------------------------------------------------------
 # Spacer / blank lines
 # ---------------------------------------------------------------------------
-bk_spacer() { local n="${1:-1}"; for (( i=0; i<n; i++ )); do printf '\n'; done; }
+bk_spacer() { local n="${1:-1}"; for (( i=0; i<n; i++ )); do printf '\n'; done; } || true
 
 # ---------------------------------------------------------------------------
 # Indent helper
@@ -1074,7 +1074,7 @@ bk_spacer() { local n="${1:-1}"; for (( i=0; i<n; i++ )); do printf '\n'; done; 
 bk_indent() {
   local n="${1:-2}"
   local pad=""
-  for (( i=0; i<n; i++ )); do pad+=" "; done
+  for (( i=0; i<n; i++ )); do pad+=" "; done || true
   while IFS= read -r line; do
     printf '%s%s\n' "$pad" "$line"
   done
@@ -1090,8 +1090,8 @@ bk_banner() {
   local pad_left=$(( (width - text_len) / 2 ))
   local pad_right=$(( width - text_len - pad_left ))
   local left="" right=""
-  for (( i=0; i<pad_left-1; i++ )); do left+="─"; done
-  for (( i=0; i<pad_right-1; i++ )); do right+="─"; done
+  for (( i=0; i<pad_left-1; i++ )); do left+="─"; done || true
+  for (( i=0; i<pad_right-1; i++ )); do right+="─"; done || true
 
   printf '%s%s %s%s%s %s%s\n' "$c" "$left" "$_BK_BOLD" "$text" "$_BK_RESET$c" "$right" "$_BK_RESET"
 }
